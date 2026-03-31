@@ -1,0 +1,21 @@
+from django.db import models
+from django.conf import settings
+
+User = settings.AUTH_USER_MODEL
+
+def post_image_upload_path(instance, filename):
+        return f"posts/user_{instance.author.id}/{filename}" 
+
+class Post(models.Model):
+        author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
+        content = models.TextField(max_length=600)
+        image = models.ImageField(upload_to=post_image_upload_path, blank=True, null=True)
+        created_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
+        is_deleted = models.BooleanField(default=False)
+
+        parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+
+
+        def __str__(self):
+                return f"Post by {self.author.email} at {self.created_at}"
