@@ -1,5 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
+
+User = settings.AUTH_USER_MODEL
 
 # Create your models here.
 class User(AbstractUser):
@@ -9,8 +12,38 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    USERNAME_FIELD = 'email'# Set email as the unique identifier for authentication
-    REQUIRED_FIELDS = ['username']  # Keep username as a required field for compatibility with Django's admin and other features
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']  
+    def __str__(self):
+        return self.username
+
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following'
+    )
+    following = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='followers'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['follower', 'following'],
+                name='unique_follow'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['follower']),
+            models.Index(fields=['following']),
+        ]
 
     def __str__(self):
-        return self.email
+        return f"{self.follower} follows {self.following}"
