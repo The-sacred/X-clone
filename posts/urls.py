@@ -1,4 +1,4 @@
-from .views import PostListCreateView, PostDetailView, LikePostView, UnlikePostView, CreateCommentView,  PostCommentsView, DeleteCommentView
+from .views import PostListCreateView, PostDetailView, LikePostView, UnlikePostView, CreateCommentView,  PostCommentsView, DeleteCommentView, FeedView
 
 from django.urls import path
 
@@ -12,4 +12,6 @@ urlpatterns = [
     path('<int:post_id>/comments/', PostCommentsView.as_view()),
     path('<int:post_id>/comments/create/', CreateCommentView.as_view()),
     path('comments/<int:comment_id>/delete/', DeleteCommentView.as_view()),
+
+    path('feed/', FeedView.as_view(), name='feed'),
 ]

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics, permissions
 from .models import Post, Like, Comment
+from users.models import Follow
 from .serializers import PostSerializer, CommentSerializer
 from .permissions import IsAuthorOrReadOnly
 from rest_framework.views import APIView
@@ -20,6 +21,7 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.filter(is_deleted=False)
     serializer_class = PostSerializer
     permission_classes = [IsAuthorOrReadOnly]
+    lookup_field = 'pk'
 
     def perform_destroy(self, instance):
         instance.is_deleted = True
@@ -96,7 +98,8 @@ class PostCommentsView(generics.ListAPIView):
             post_id=post_id,
             parent__isnull=True,  # only top-level comments
             is_deleted=False
-        ).select_related('author').prefetch_related('replies')    
+        ).select_related('author').prefetch_related('replies')  
+          
 class DeleteCommentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -112,4 +115,30 @@ class DeleteCommentView(APIView):
         comment.is_deleted = True
         comment.save()
 
-        return Response({"message": "Comment deleted"})    
+        return Response({"message": "Comment deleted"})  
+      
+class FeedView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self): # type: ignore[override]
+        user = self.request.user
+
+        following_ids = Follow.objects.filter(
+            follower=user
+        ).values_list('following_id', flat=True)
+
+        user_ids = list(following_ids) + [user.pk]
+
+        # 🔥 If user follows no one
+        if len(following_ids) == 0:
+            queryset = Post.objects.filter(is_deleted=False)
+        else:
+            queryset = Post.objects.filter(
+                author_id__in=user_ids,
+                is_deleted=False
+            )
+
+        queryset = queryset.select_related('author').prefetch_related('likes')
+        queryset = queryset.order_by('-created_at')
+
+        return queryset
