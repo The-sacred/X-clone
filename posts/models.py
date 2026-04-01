@@ -20,6 +20,25 @@ class Post(models.Model):
         def __str__(self):
                 return f"Post by {self.author.email} at {self.created_at}"
 
+class Comment(models.Model):
+        author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+        post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+        content = models.TextField(max_length=300)
+        is_deleted = models.BooleanField(default=False)
+        created_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
+
+        class Meta:
+                ordering = ['created_at']
+                indexes = [
+                        models.Index(fields=['author']),
+                        models.Index(fields=['post'])
+                ]
+
+
+        def __str__(self) -> str:
+                return self.content[:20]
+
 class Like(models.Model):
         post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
         author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
