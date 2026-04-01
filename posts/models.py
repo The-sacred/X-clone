@@ -19,3 +19,23 @@ class Post(models.Model):
 
         def __str__(self):
                 return f"Post by {self.author.email} at {self.created_at}"
+
+class Like(models.Model):
+        post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+        author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
+        created_at = models.DateTimeField(auto_now_add=True)
+
+        class Meta:
+                constraints = [
+                        models.UniqueConstraint(
+                                fields=['post', 'author'],
+                                name='unique_like')
+                ]
+                indexes = [
+                        models.Index(fields=['post']),
+                        models.Index(fields=['author'])
+                ]
+                
+        def __str__(self):
+                return f"{self.author.username} liked Post {self.post}"       
+
